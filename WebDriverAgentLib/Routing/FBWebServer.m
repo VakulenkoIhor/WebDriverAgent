@@ -36,7 +36,7 @@ static NSString *const FBServerURLEndMarker = @"<-ServerURLHere";
 
 - (void)handleResourceNotFound
 {
-  [FBLogger logFmt:@"Received request for %@ which we do not handle", self.requestURI];
+  [FBLogger logFmt:@"🧨 Received request for %@ which we do not handle", self.requestURI];
   [super handleResourceNotFound];
 }
 
@@ -69,7 +69,7 @@ static NSString *const FBServerURLEndMarker = @"<-ServerURLHere";
 
 - (void)startServing
 {
-  [FBLogger logFmt:@"Built at %s %s", __DATE__, __TIME__];
+  [FBLogger logFmt:@"🧨 Built at %s %s", __DATE__, __TIME__];
   self.exceptionHandler = [FBExceptionHandler new];
   [self startHTTPServer];
   [self initScreenshotsBroadcaster];
@@ -105,14 +105,14 @@ static NSString *const FBServerURLEndMarker = @"<-ServerURLHere";
       break;
     }
 
-    [FBLogger logFmt:@"Failed to start web server on port %ld with error %@", (long)port, [error description]];
+    [FBLogger logFmt:@"🧨 Failed to start web server on port %ld with error %@", (long)port, [error description]];
   }
 
   if (!serverStarted) {
-    [FBLogger logFmt:@"Last attempt to start web server failed with error %@", [error description]];
+    [FBLogger logFmt:@"🧨 Last attempt to start web server failed with error %@", [error description]];
     abort();
   }
-  [FBLogger logFmt:@"%@http://%@:%d%@", FBServerURLBeginMarker, [XCUIDevice sharedDevice].fb_wifiIPAddress ?: @"localhost", [self.server port], FBServerURLEndMarker];
+  [FBLogger logFmt:@"🧨 %@http://%@:%d%@", FBServerURLBeginMarker, [XCUIDevice sharedDevice].fb_wifiIPAddress ?: @"localhost", [self.server port], FBServerURLEndMarker];
 }
 
 - (void)initScreenshotsBroadcaster
@@ -123,7 +123,7 @@ static NSString *const FBServerURLEndMarker = @"<-ServerURLHere";
   self.screenshotsBroadcaster.delegate = [[FBMjpegServer alloc] init];
   NSError *error;
   if (![self.screenshotsBroadcaster startWithError:&error]) {
-    [FBLogger logFmt:@"Cannot init screenshots broadcaster service on port %@. Original error: %@", @(FBConfiguration.mjpegServerPort), error.description];
+    [FBLogger logFmt:@"🧨 Cannot init screenshots broadcaster service on port %@. Original error: %@", @(FBConfiguration.mjpegServerPort), error.description];
     self.screenshotsBroadcaster = nil;
   }
 }
@@ -152,6 +152,7 @@ static NSString *const FBServerURLEndMarker = @"<-ServerURLHere";
 
 - (void)stopServing
 {
+  [FBLogger log: @"🧨 Did request server shutdown"];
   [FBSession.activeSession kill];
   [self stopScreenshotsBroadcaster];
   if (self.server.isRunning) {
@@ -162,6 +163,8 @@ static NSString *const FBServerURLEndMarker = @"<-ServerURLHere";
 
 - (BOOL)attemptToStartServer:(RoutingHTTPServer *)server onPort:(NSInteger)port withError:(NSError **)error
 {
+  NSString* logString = [NSString stringWithFormat:@"🧨 Attempt to start server on port: %ld with error", (long)port];
+  [FBLogger log: logString];
   server.port = (UInt16)port;
   NSError *innerError = nil;
   BOOL started = [server start:&innerError];
@@ -173,6 +176,8 @@ static NSString *const FBServerURLEndMarker = @"<-ServerURLHere";
     NSString *description = @"Unknown Error when Starting server";
     if ([innerError.domain isEqualToString:NSPOSIXErrorDomain] && innerError.code == EADDRINUSE) {
       description = [NSString stringWithFormat:@"Unable to start web server on port %ld", (long)port];
+      NSString* desctiptionLogString = [NSString stringWithFormat:@"🧨 %@", description];
+      [FBLogger log: desctiptionLogString];
     }
     return
     [[[[FBErrorBuilder builder]
